@@ -76,6 +76,21 @@ app.get("/health", (_, res) => {
   res.json({ status: "UP" });
 });
 
-app.listen(PORT, () => {
-  console.log(`Mock X12 API running at http://localhost:${PORT}`);
-});
+const path = require("path");
+const csvFilePath = path.join(process.cwd(), "data", "claims.csv");
+
+// Update your stream to use the dynamic path
+fs.createReadStream(csvFilePath)
+  .pipe(csv())
+  .on("data", (row) => claims.push(row))
+  .on("end", () => console.log("Claims loaded"));
+
+// Only listen if NOT on Vercel (for local development)
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Mock X12 API running at http://localhost:${PORT}`);
+  });
+}
+
+// Export for Vercel
+module.exports = app;
